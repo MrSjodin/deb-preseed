@@ -1,0 +1,363 @@
+#_preseed_V1
+#### Contents of the preconfiguration file (for bullseye)
+### Localization
+# Preseeding only locale sets language, country and locale.
+d-i debian-installer/locale string en_US
+
+# The values can also be preseeded individually for greater flexibility.
+#d-i debian-installer/language string en
+d-i debian-installer/country string SE
+d-i debian-installer/locale string en_US.UTF-8
+# Optionally specify additional locales to be generated.
+#d-i localechooser/supported-locales multiselect en_US.UTF-8, nl_NL.UTF-8
+
+# Keyboard selection.
+d-i keyboard-configuration/xkb-keymap select sv
+# d-i keyboard-configuration/toggle select No toggling
+
+### Network configuration
+d-i netcfg/choose_interface select auto
+d-i netcfg/dhcp_timeout string 30
+d-i netcfg/dhcpv6_timeout string 30
+
+d-i netcfg/dhcp_failed note
+d-i netcfg/dhcp_options select Configure network manually
+
+# Static network configuration.
+#
+# IPv4 example
+#d-i netcfg/get_ipaddress string 192.168.1.42
+#d-i netcfg/get_netmask string 255.255.255.0
+#d-i netcfg/get_gateway string 192.168.1.1
+#d-i netcfg/get_nameservers string 192.168.1.1
+#d-i netcfg/confirm_static boolean true
+#
+# IPv6 example
+#d-i netcfg/get_ipaddress string fc00::2
+#d-i netcfg/get_netmask string ffff:ffff:ffff:ffff::
+#d-i netcfg/get_gateway string fc00::1
+#d-i netcfg/get_nameservers string fc00::1
+#d-i netcfg/confirm_static boolean true
+
+# Any hostname and domain names assigned from dhcp take precedence over
+# values set here. However, setting the values still prevents the questions
+# from being shown, even if values come from dhcp.
+d-i netcfg/get_hostname string unassigned-hostname
+d-i netcfg/get_domain string unassigned-domain
+
+# If you want to force a hostname, regardless of what either the DHCP
+# server returns or what the reverse DNS entry for the IP is, uncomment
+# and adjust the following line.
+d-i netcfg/hostname string hassio
+
+# If non-free firmware is needed for the network or other hardware, you can
+# configure the installer to always try to load it, without prompting. Or
+# change to false to disable asking.
+#d-i hw-detect/load_firmware boolean true
+
+### Mirror settings
+# If you select ftp, the mirror/country string does not need to be set.
+d-i mirror/protocol string http
+d-i mirror/country string manual
+d-i mirror/http/hostname string ftp.se.debian.org
+d-i mirror/http/directory string /debian
+d-i mirror/http/proxy string
+
+# Suite to install.
+d-i mirror/suite string stable
+
+### Account setup
+# Skip creation of a root account (normal user account will be able to
+# use sudo).
+d-i passwd/root-login boolean false
+# Alternatively, to skip creation of a normal user account.
+#d-i passwd/make-user boolean false
+
+# Root password, either in clear text
+#d-i passwd/root-password password r00tme
+#d-i passwd/root-password-again password r00tme
+# or encrypted using a crypt(3)  hash.
+d-i passwd/root-password-crypted password $1$jJ90zFjU$OiRyo1aU0czC2hcj6Tk/A.
+
+# To create a normal user account.
+d-i passwd/user-fullname string Mattias
+d-i passwd/username string mattias
+# Normal user's password, either in clear text
+#d-i passwd/user-password password insecure
+#d-i passwd/user-password-again password insecure
+# or encrypted using a crypt(3) hash.
+d-i passwd/user-password-crypted password $1$TKrj/594$.6PsrGTq.QKM0mTUFXfb71
+# Create the first user with the specified UID instead of the default.
+#d-i passwd/user-uid string 1010
+
+# The user account will be added to some standard initial groups. To
+# override that, use this.
+#d-i passwd/user-default-groups string audio cdrom video
+
+### Clock and time zone setup
+# Controls whether or not the hardware clock is set to UTC.
+d-i clock-setup/utc boolean true
+
+# You may set this to any valid setting for $TZ; see the contents of
+# /usr/share/zoneinfo/ for valid values.
+d-i time/zone string Europe/Stockholm
+
+# Controls whether to use NTP to set the clock during the install
+d-i clock-setup/ntp boolean true
+# NTP server to use. The default is almost always fine here.
+#d-i clock-setup/ntp-server string ntp.example.com
+
+### Partitioning
+d-i partman-auto/disk string /dev/sda
+d-i partman-auto/method string lvm
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-lvm/device_remove_lvm_span boolean true
+d-i partman-md/device_remove_md boolean true
+d-i partman-auto/purge_lvm_from_device boolean true
+d-i partman-auto-lvm/new_vg_name string vg0
+d-i partman-lvm/confirm boolean true
+d-i partman/alignment string "optimal"
+d-i partman-auto-lvm/guided_size string max
+
+d-i partman-auto/expert_recipe string                         \
+      boot-root ::                                            \
+              256 100 320 free                                \
+                      $primary{ }                             \
+                      $bootable{ }                            \
+                      $iflabel{ gpt }                         \
+                      $reusemethod{ }                         \
+                      method{ efi }                           \
+                      format{ }                               \
+               .                                              \
+              256 100 320 ext4                                \
+                      $primary{ }                             \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /boot }                     \
+              .                                               \
+              1024 100 200% linux-swap                        \
+                      $lvmok{ }                               \
+                      lv_name{ swap }                         \
+                      method{ swap } format{ }                \
+              .                                               \
+              512 100 576 ext4                                \
+                      $lvmok{ }                               \
+                      lv_name{ root }                         \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ / }                         \
+              .
+              3072 100 3200 ext4                              \
+                      $lvmok{ }                               \
+                      lv_name{ usr }                          \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /usr }                      \
+              .
+              3072 100 3200 ext4                              \
+                      $lvmok{ }                               \
+                      lv_name{ var }                          \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /var }                      \
+              .
+              2048 100 2176 ext4                              \
+                      $lvmok{ }                               \
+                      lv_name{ var_log }                      \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /var/log }                  \
+              .
+              16348 100 16512 ext4                            \
+                      $lvmok{ }                               \
+                      lv_name{ var_lib_docker }               \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /var/lib/docker }           \
+              .
+              1024 100 1152 ext4                              \
+                      $lvmok{ }                               \
+                      lv_name{ usr_share }                    \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /usr/share }                \
+              .
+              512 100 576 ext4                                \
+                      $lvmok{ }                               \
+                      lv_name{ home }                         \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /home }                     \
+              .
+
+d-i partman-lvm/confirm_nooverwrite boolean true
+d-i partman/confirm_write_new_label boolean true
+d-i partman/choose_partition select finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+
+## Controlling how partitions are mounted
+# The default is to mount by UUID, but you can also choose "traditional" to
+# use traditional device names, or "label" to try filesystem labels before
+# falling back to UUIDs.
+#d-i partman/mount_style select uuid
+
+### Base system installation
+# Configure APT to not install recommended packages by default. Use of this
+# option can result in an incomplete system and should only be used by very
+# experienced users.
+#d-i base-installer/install-recommends boolean false
+
+# The kernel image (meta) package to be installed; "none" can be used if no
+# kernel is to be installed.
+#d-i base-installer/kernel/image string linux-image-686
+
+### Apt setup
+# You can choose to install non-free and contrib software.
+d-i apt-setup/non-free boolean true
+d-i apt-setup/contrib boolean true
+# Uncomment this if you don't want to use a network mirror.
+#d-i apt-setup/use_mirror boolean false
+# Select which update services to use; define the mirrors to be used.
+# Values shown below are the normal defaults.
+#d-i apt-setup/services-select multiselect security, updates
+#d-i apt-setup/security_host string security.debian.org
+
+# Additional repositories, local[0-9] available
+#d-i apt-setup/local0/repository string \
+#       http://local.server/debian stable main
+#d-i apt-setup/local0/comment string local server
+# Enable deb-src lines
+#d-i apt-setup/local0/source boolean true
+# URL to the public key of the local repository; you must provide a key or
+# apt will complain about the unauthenticated repository and so the
+# sources.list line will be left commented out.
+#d-i apt-setup/local0/key string http://local.server/key
+# If the provided key file ends in ".asc" the key file needs to be an
+# ASCII-armoured PGP key, if it ends in ".gpg" it needs to use the
+# "GPG key public keyring" format, the "keybox database" format is
+# currently not supported.
+
+# By default the installer requires that repositories be authenticated
+# using a known gpg key. This setting can be used to disable that
+# authentication. Warning: Insecure, not recommended.
+#d-i debian-installer/allow_unauthenticated boolean true
+
+# Uncomment this to add multiarch configuration for i386
+#d-i apt-setup/multiarch string i386
+
+
+### Package selection
+tasksel tasksel/first multiselect standard
+
+# Individual additional packages to install
+d-i pkgsel/include string openssh-server
+# Whether to upgrade packages after debootstrap.
+# Allowed values: none, safe-upgrade, full-upgrade
+#d-i pkgsel/upgrade select none
+
+# Some versions of the installer can report back on what software you have
+# installed, and what software you use. The default is not to report back,
+# but sending reports helps the project determine what software is most
+# popular and should be included on the first CD/DVD.
+popularity-contest popularity-contest/participate boolean false
+
+### Boot loader installation
+# Grub is the boot loader (for x86).
+
+# This is fairly safe to set, it makes grub install automatically to the UEFI
+# partition/boot record if no other operating system is detected on the machine.
+d-i grub-installer/only_debian boolean true
+
+# This one makes grub-installer install to the UEFI partition/boot record, if
+# it also finds some other OS, which is less safe as it might not be able to
+# boot that other OS.
+#d-i grub-installer/with_other_os boolean true
+
+# Due notably to potential USB sticks, the location of the primary drive can
+# not be determined safely in general, so this needs to be specified:
+#d-i grub-installer/bootdev  string /dev/sda
+# To install to the primary device (assuming it is not a USB stick):
+#d-i grub-installer/bootdev  string default
+
+# Alternatively, if you want to install to a location other than the UEFI
+# parition/boot record, uncomment and edit these lines:
+#d-i grub-installer/only_debian boolean false
+#d-i grub-installer/with_other_os boolean false
+#d-i grub-installer/bootdev  string (hd0,1)
+# To install grub to multiple disks:
+#d-i grub-installer/bootdev  string (hd0,1) (hd1,1) (hd2,1)
+
+# Optional password for grub, either in clear text
+#d-i grub-installer/password password r00tme
+#d-i grub-installer/password-again password r00tme
+# or encrypted using an MD5 hash, see grub-md5-crypt(8).
+#d-i grub-installer/password-crypted password [MD5 hash]
+
+# Use the following option to add additional boot parameters for the
+# installed system (if supported by the bootloader installer).
+# Note: options passed to the installer will be added automatically.
+#d-i debian-installer/add-kernel-opts string nousb
+
+### Finishing up the installation
+# During installations from serial console, the regular virtual consoles
+# (VT1-VT6) are normally disabled in /etc/inittab. Uncomment the next
+# line to prevent this.
+#d-i finish-install/keep-consoles boolean true
+
+# Avoid that last message about the install being complete.
+d-i finish-install/reboot_in_progress note
+
+# This will prevent the installer from ejecting the CD during the reboot,
+# which is useful in some situations.
+#d-i cdrom-detect/eject boolean false
+
+# This is how to make the installer shutdown when finished, but not
+# reboot into the installed system.
+#d-i debian-installer/exit/halt boolean true
+# This will power off the machine instead of just halting it.
+#d-i debian-installer/exit/poweroff boolean true
+
+### Preseeding other packages
+# Depending on what software you choose to install, or if things go wrong
+# during the installation process, it's possible that other questions may
+# be asked. You can preseed those too, of course. To get a list of every
+# possible question that could be asked during an install, do an
+# installation, and then run these commands:
+#   debconf-get-selections --installer > file
+#   debconf-get-selections >> file
+
+
+#### Advanced options
+### Running custom commands during the installation
+# d-i preseeding is inherently not secure. Nothing in the installer checks
+# for attempts at buffer overflows or other exploits of the values of a
+# preconfiguration file like this one. Only use preconfiguration files from
+# trusted locations! To drive that home, and because it's generally useful,
+# here's a way to run any shell command you'd like inside the installer,
+# automatically.
+
+# This first command is run as early as possible, just after
+# preseeding is read.
+#d-i preseed/early_command string anna-install some-udeb
+# This command is run immediately before the partitioner starts. It may be
+# useful to apply dynamic partitioner preseeding that depends on the state
+# of the disks (which may not be visible when preseed/early_command runs).
+#d-i partman/early_command \
+#       string debconf-set partman-auto/disk "$(list-devices disk | head -n1)"
+# This command is run just before the install finishes, but when there is
+# still a usable /target directory. You can chroot to /target and use it
+# directly, or use the apt-install and in-target commands to easily install
+# packages and run commands in the target system.
+#d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
+d-i preseed/late_command string \
+    echo "mattias ALL=(ALL) NOPASSWD: ALL" > /target/etc/sudoers.d/000-mattias; \
+    in-target mkdir /home/mattias/.ssh; \
+    in-target /bin/sh -c 'echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAj6Ygb1Jo7gQIfhgy+6DWGDHLrPPcv7aeUNv90j8om41eeY6T4ErdcJhH1enpFLZ2Uctbf4WQdKdI6JiR5eeNJ/zsyKlMR3z9Lx3gUZBPdIS56llRmwDd1AYyTOrsuXrMwBZg2DCIu+IKx5e197tRPlraWWhvjM6CZqMiFon5oo1ZkojvHQ9aXOA+I8F+4ZNSHhqK327cbO2t2r0f2JBFr7SGj/mLtP3DUu4gdwreLNnQB4knGXP9ydpNZjKMFEIejDSKub+8AOY0mTIxS1qPiqwpql2gAvu0fi8D98l0JpJkzoR6x5blFTy1DyXX8n1AOrGXliL7sGB5nREwurlu/w== mattias-rsa-key-20210523" > /home/mattias/.ssh/authorized_keys'; \
+    in-target /bin/sh -c 'chown mattias:mattias -R /home/mattias/.ssh'; \
+    in-target /bin/sh -c 'apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common vim'; \
+    in-target /bin/sh -c 'curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -'; \
+    in-target /bin/sh -c 'add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian buster stable"'; \
+    in-target /bin/sh -c 'apt-get update'; \
+    in-target /bin/sh -c 'apt-get install -y docker-ce docker-ce-cli containerd.io'; \
+    in-target /bin/sh -c 'usermod -aG docker mattias';
