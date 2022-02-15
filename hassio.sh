@@ -44,8 +44,8 @@ d-i netcfg/dhcp_options select Configure network manually
 # Any hostname and domain names assigned from dhcp take precedence over
 # values set here. However, setting the values still prevents the questions
 # from being shown, even if values come from dhcp.
-d-i netcfg/get_hostname string unassigned-hostname
-d-i netcfg/get_domain string unassigned-domain
+#d-i netcfg/get_hostname string unassigned-hostname
+#d-i netcfg/get_domain string unassigned-domain
 
 # If you want to force a hostname, regardless of what either the DHCP
 # server returns or what the reverse DNS entry for the IP is, uncomment
@@ -150,14 +150,84 @@ d-i partman-auto/expert_recipe string \
                       lv_name{ swap } \
               . \
               500 505 512 xfs \
-                      $lvmok{} \
-                      lv_name{ lv-root } \
+                      $lvmok{ } \
+                      lv_name{ root } \
                       in_vg{ vg00 } \
                       method{ format } \
                       format{ } \
                       use_filesystem{ } \
                       filesystem{ xfs } \
                       mountpoint{ / } \
+              .
+              500 505 512 xfs \
+                      $lvmok{ } \
+                      lv_name{ usr } \
+                      in_vg{ vg00 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ xfs } \
+                      mountpoint{ /usr } \
+              .
+              1010 1020 1030 xfs \
+                      $lvmok{ } \
+                      lv_name{ usr_share } \
+                      in_vg{ vg00 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ xfs } \
+                      mountpoint{ /usr/share } \
+              .
+              1010 1020 1030 xfs \
+                      $lvmok{ } \
+                      lv_name{ var } \
+                      in_vg{ vg00 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ xfs } \
+                      mountpoint{ /var } \
+              .
+              1010 1020 1030 xfs \
+                      $lvmok{ } \
+                      lv_name{ var_log } \
+                      in_vg{ vg00 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ xfs } \
+                      mountpoint{ /var/log } \
+              .
+              24000 24150 24300 xfs \
+                      $lvmok{ } \
+                      lv_name{ hassio } \
+                      in_vg{ vg00 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ xfs } \
+                      mountpoint{ /usr/share/hassio } \
+              .
+              16000 16100 16200 xfs \
+                      $lvmok{ } \
+                      lv_name{ hassio_media } \
+                      in_vg{ vg00 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ xfs } \
+                      mountpoint{ /usr/share/hassio/media } \
+              .
+              24000 24150 24300 xfs \
+                      $lvmok{ } \
+                      lv_name{ var_lib_docker } \
+                      in_vg{ vg00 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ xfs } \
+                      mountpoint{ /var/lib/docker } \
               .
 
 d-i partman-lvm/confirm_nooverwrite boolean true
@@ -218,7 +288,7 @@ d-i apt-setup/contrib boolean true
 
 ### Package selection
 tasksel tasksel/first multiselect minimal
-d-i pkgsel/include string openssh-server unzip mc ntpdate apt-transport-https curl wget python avahi-daemon git telnet traceroute vim usbutils unzip chrony
+d-i pkgsel/include string openssh-server unzip mc ntpdate apt-transport-https curl wget python avahi-daemon git telnet traceroute vim usbutils unzip chrony jq udisks2 libglib2.0-bin network-manager dbus
 d-i pkgsel/upgrade select full-upgrade
 
 # Some versions of the installer can report back on what software you have
@@ -321,9 +391,17 @@ d-i preseed/late_command string \
     in-target mkdir /home/mattias/.ssh; \
     in-target /bin/sh -c 'echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAj6Ygb1Jo7gQIfhgy+6DWGDHLrPPcv7aeUNv90j8om41eeY6T4ErdcJhH1enpFLZ2Uctbf4WQdKdI6JiR5eeNJ/zsyKlMR3z9Lx3gUZBPdIS56llRmwDd1AYyTOrsuXrMwBZg2DCIu+IKx5e197tRPlraWWhvjM6CZqMiFon5oo1ZkojvHQ9aXOA+I8F+4ZNSHhqK327cbO2t2r0f2JBFr7SGj/mLtP3DUu4gdwreLNnQB4knGXP9ydpNZjKMFEIejDSKub+8AOY0mTIxS1qPiqwpql2gAvu0fi8D98l0JpJkzoR6x5blFTy1DyXX8n1AOrGXliL7sGB5nREwurlu/w== mattias-rsa-key-20210523" > /home/mattias/.ssh/authorized_keys'; \
     in-target /bin/sh -c 'chown mattias:mattias -R /home/mattias/.ssh'; \
+    in-target /bin/sh -c 'curl -o /usr/local/bin/systemupdate.sh https://raw.githubusercontent.com/MrSjodin/deb-preseed/main/systemupdate.sh'; \
+    in-target /bin/sh -c 'chmod 0755 /usr/local/bin/systemupdate.sh'; \
+    in-target /bin/sh -c 'cat >> /etc/crontab <<EOF \
+    0 3 * * 0	root	/usr/local/sbin/systemupdate.sh \
+    EOF'; \
     in-target /bin/sh -c 'apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common vim'; \
     in-target /bin/sh -c 'curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -'; \
-    in-target /bin/sh -c 'add-apt-repository "deb https://download.docker.com/linux/debian bullseye stable"'; \
+    in-target /bin/sh -c 'add-apt-repository "deb arch=x86_64 https://download.docker.com/linux/debian buster stable"'; \
     in-target /bin/sh -c 'apt-get update'; \
     in-target /bin/sh -c 'apt-get install -y docker-ce docker-ce-cli containerd.io'; \
     in-target /bin/sh -c 'usermod -aG docker mattias';
+    in-target /bin/sh -c 'service docker start';
+    in-target /bin/sh -c 'curl -fsSL https://github.com/home-assistant/os-agent/releases/download/1.2.2/os-agent_1.2.2_linux_x86_64.deb | dpkg -i -'; \
+    in-target /bin/sh -c 'curl -fsSL https://github.com/home-assistant/supervised-installer/releases/latest/download/homeassistant-supervised.deb | dpkg -i -'; \
