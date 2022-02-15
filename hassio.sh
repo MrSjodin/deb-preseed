@@ -12,7 +12,9 @@ d-i debian-installer/locale string en_US.UTF-8
 #d-i localechooser/supported-locales multiselect en_US.UTF-8, nl_NL.UTF-8
 
 # Keyboard selection.
-d-i keyboard-configuration/xkb-keymap select sv
+d-i keyboard-configuration/xkb-keymap select se
+d-i debian-installer/keymap select se
+d-i keymap select se
 # d-i keyboard-configuration/toggle select No toggling
 
 ### Network configuration
@@ -118,76 +120,114 @@ d-i partman-auto-lvm/new_vg_name string vg0
 d-i partman-lvm/confirm boolean true
 d-i partman/alignment string "optimal"
 d-i partman-auto-lvm/guided_size string max
-
-d-i partman-auto/expert_recipe string                         \
-      boot-root ::                                            \
-              256 100 320 free                                \
-                      $primary{ }                             \
-                      $bootable{ }                            \
-                      $iflabel{ gpt }                         \
-                      $reusemethod{ }                         \
-                      method{ efi }                           \
-                      format{ }                               \
-               .                                              \
-              256 100 320 ext4                                \
-                      $primary{ }                             \
-                      method{ format } format{ }              \
-                      use_filesystem{ } filesystem{ ext4 }    \
-                      mountpoint{ /boot }                     \
-              .                                               \
-              1024 100 200% linux-swap                        \
-                      $lvmok{ }                               \
-                      lv_name{ swap }                         \
-                      method{ swap } format{ }                \
-              .                                               \
-              512 100 576 ext4                                \
-                      $lvmok{ }                               \
-                      lv_name{ root }                         \
-                      method{ format } format{ }              \
-                      use_filesystem{ } filesystem{ ext4 }    \
-                      mountpoint{ / }                         \
+d-i partman-auto/expert_recipe string \
+        efi-boot-lvm-root :: \
+              512 512 512 fat32 \
+                      $primary{ } \
+                      method{ efi } \
+                      format{ } \
+              . \
+              512 512 512 ext4 \
+                      $primary{ } \
+                      $bootable{ } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ ext4 } \
+                      mountpoint{ /boot } \
+              . \
+              150% 150% 12288 linux-swap \
+                      method{ swap } \
+                      format{ } \
+                      vg_name{ vg0 } \
+                      lv_name{ swap } \
+              . \
+              100 1000 1000000000 ext4 \
+                      $defaultignore{ } \
+                      $primary{ } \
+                      method{ lvm } \
+                      device{ /dev/sda } \
+                      vg_name{ vg0 } \
+              . \
+              512 512 512 ext4 \
+                      $lvmok{} \
+                      lv_name{ lv-root } \
+                      in_vg{ vg0 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ ext4 } \
+                      mountpoint{ / } \
               .
-              3072 100 3200 ext4                              \
-                      $lvmok{ }                               \
-                      lv_name{ usr }                          \
-                      method{ format } format{ }              \
-                      use_filesystem{ } filesystem{ ext4 }    \
-                      mountpoint{ /usr }                      \
+              2048 2048 2048 ext4 \
+                      $lvmok{} \
+                      lv_name{ lv-usr } \
+                      in_vg{ vg0 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ ext4 } \
+                      mountpoint{ /usr } \
               .
-              3072 100 3200 ext4                              \
-                      $lvmok{ }                               \
-                      lv_name{ var }                          \
-                      method{ format } format{ }              \
-                      use_filesystem{ } filesystem{ ext4 }    \
-                      mountpoint{ /var }                      \
+              1024 1024 1024 ext4 \
+                      $lvmok{} \
+                      lv_name{ lv-usr_share } \
+                      in_vg{ vg0 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ ext4 } \
+                      mountpoint{ /usr/share } \
               .
-              2048 100 2176 ext4                              \
-                      $lvmok{ }                               \
-                      lv_name{ var_log }                      \
-                      method{ format } format{ }              \
-                      use_filesystem{ } filesystem{ ext4 }    \
-                      mountpoint{ /var/log }                  \
+              1024 1024 1024 ext4 \
+                      $lvmok{} \
+                      lv_name{ lv-var } \
+                      in_vg{ vg0 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ ext4 } \
+                      mountpoint{ /var } \
               .
-              16348 100 16512 ext4                            \
-                      $lvmok{ }                               \
-                      lv_name{ var_lib_docker }               \
-                      method{ format } format{ }              \
-                      use_filesystem{ } filesystem{ ext4 }    \
-                      mountpoint{ /var/lib/docker }           \
+              1024 1024 1024 ext4 \
+                      $lvmok{} \
+                      lv_name{ lv-var_log } \
+                      in_vg{ vg0 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ ext4 } \
+                      mountpoint{ /var/log } \
               .
-              1024 100 1152 ext4                              \
-                      $lvmok{ }                               \
-                      lv_name{ usr_share }                    \
-                      method{ format } format{ }              \
-                      use_filesystem{ } filesystem{ ext4 }    \
-                      mountpoint{ /usr/share }                \
+              24576 24576 24576 ext4 \
+                      $lvmok{} \
+                      lv_name{ lv-hassio } \
+                      in_vg{ vg0 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ ext4 } \
+                      mountpoint{ /usr/share/hassio } \
               .
-              512 100 576 ext4                                \
-                      $lvmok{ }                               \
-                      lv_name{ home }                         \
-                      method{ format } format{ }              \
-                      use_filesystem{ } filesystem{ ext4 }    \
-                      mountpoint{ /home }                     \
+              16384 16384 16384 ext4 \
+                      $lvmok{} \
+                      lv_name{ lv-hassio_media } \
+                      in_vg{ vg0 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ ext4 } \
+                      mountpoint{ /usr/share/hassio/media } \
+              .
+              32768 32768 32768 ext4 \
+                      $lvmok{} \
+                      lv_name{ lv-var_lib_docker } \
+                      in_vg{ vg0 } \
+                      method{ format } \
+                      format{ } \
+                      use_filesystem{ } \
+                      filesystem{ ext4 } \
+                      mountpoint{ /var/lib/docker } \
               .
 
 d-i partman-lvm/confirm_nooverwrite boolean true
@@ -246,15 +286,10 @@ d-i apt-setup/contrib boolean true
 # Uncomment this to add multiarch configuration for i386
 #d-i apt-setup/multiarch string i386
 
-
 ### Package selection
-tasksel tasksel/first multiselect standard
-
-# Individual additional packages to install
-d-i pkgsel/include string openssh-server
-# Whether to upgrade packages after debootstrap.
-# Allowed values: none, safe-upgrade, full-upgrade
-#d-i pkgsel/upgrade select none
+tasksel tasksel/first multiselect minimal
+d-i pkgsel/include string openssh-server unzip mc ntpdate apt-transport-https curl wget python avahi-daemon git telnet traceroute vim usbutils unzip chrony
+d-i pkgsel/upgrade select full-upgrade
 
 # Some versions of the installer can report back on what software you have
 # installed, and what software you use. The default is not to report back,
@@ -352,12 +387,13 @@ d-i finish-install/reboot_in_progress note
 #d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
 d-i preseed/late_command string \
     echo "mattias ALL=(ALL) NOPASSWD: ALL" > /target/etc/sudoers.d/000-mattias; \
+    in-target /bin/sh -c 'chmod 0440 /etc/sudoers.d/000-mattias'; \
     in-target mkdir /home/mattias/.ssh; \
     in-target /bin/sh -c 'echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAj6Ygb1Jo7gQIfhgy+6DWGDHLrPPcv7aeUNv90j8om41eeY6T4ErdcJhH1enpFLZ2Uctbf4WQdKdI6JiR5eeNJ/zsyKlMR3z9Lx3gUZBPdIS56llRmwDd1AYyTOrsuXrMwBZg2DCIu+IKx5e197tRPlraWWhvjM6CZqMiFon5oo1ZkojvHQ9aXOA+I8F+4ZNSHhqK327cbO2t2r0f2JBFr7SGj/mLtP3DUu4gdwreLNnQB4knGXP9ydpNZjKMFEIejDSKub+8AOY0mTIxS1qPiqwpql2gAvu0fi8D98l0JpJkzoR6x5blFTy1DyXX8n1AOrGXliL7sGB5nREwurlu/w== mattias-rsa-key-20210523" > /home/mattias/.ssh/authorized_keys'; \
     in-target /bin/sh -c 'chown mattias:mattias -R /home/mattias/.ssh'; \
     in-target /bin/sh -c 'apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common vim'; \
     in-target /bin/sh -c 'curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -'; \
-    in-target /bin/sh -c 'add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian buster stable"'; \
+    in-target /bin/sh -c 'add-apt-repository "deb arch=x86_64 https://download.docker.com/linux/debian buster stable"'; \
     in-target /bin/sh -c 'apt-get update'; \
     in-target /bin/sh -c 'apt-get install -y docker-ce docker-ce-cli containerd.io'; \
     in-target /bin/sh -c 'usermod -aG docker mattias';
