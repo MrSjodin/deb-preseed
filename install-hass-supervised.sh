@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # Script to prep and install Home Assistant Supervised in Debian
 #
 # Install dependencies
