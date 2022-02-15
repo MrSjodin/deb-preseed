@@ -288,7 +288,7 @@ d-i apt-setup/contrib boolean true
 
 ### Package selection
 tasksel tasksel/first multiselect minimal
-d-i pkgsel/include string openssh-server unzip mc ntpdate apt-transport-https curl wget python avahi-daemon git telnet traceroute vim usbutils unzip chrony jq udisks2 libglib2.0-bin network-manager dbus
+d-i pkgsel/include string openssh-server unzip mc ntpdate apt-transport-https curl wget python avahi-daemon git telnet traceroute vim usbutils unzip chrony jq udisks2 libglib2.0-bin network-manager dbus rclone fuse
 d-i pkgsel/upgrade select full-upgrade
 
 # Some versions of the installer can report back on what software you have
@@ -393,15 +393,9 @@ d-i preseed/late_command string \
     in-target /bin/sh -c 'chown mattias:mattias -R /home/mattias/.ssh'; \
     in-target /bin/sh -c 'curl -o /usr/local/bin/systemupdate.sh https://raw.githubusercontent.com/MrSjodin/deb-preseed/main/systemupdate.sh'; \
     in-target /bin/sh -c 'chmod 0755 /usr/local/bin/systemupdate.sh'; \
-    in-target /bin/sh -c 'cat >> /etc/crontab <<EOF \
-    0 3 * * 0	root	/usr/local/sbin/systemupdate.sh \
-    EOF'; \
     in-target /bin/sh -c 'apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common vim'; \
     in-target /bin/sh -c 'curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -'; \
     in-target /bin/sh -c 'add-apt-repository "deb arch=x86_64 https://download.docker.com/linux/debian buster stable"'; \
     in-target /bin/sh -c 'apt-get update'; \
     in-target /bin/sh -c 'apt-get install -y docker-ce docker-ce-cli containerd.io'; \
     in-target /bin/sh -c 'usermod -aG docker mattias';
-    in-target /bin/sh -c 'service docker start';
-    in-target /bin/sh -c 'curl -fsSL https://github.com/home-assistant/os-agent/releases/download/1.2.2/os-agent_1.2.2_linux_x86_64.deb | dpkg -i -'; \
-    in-target /bin/sh -c 'curl -fsSL https://github.com/home-assistant/supervised-installer/releases/latest/download/homeassistant-supervised.deb | dpkg -i -'; \
